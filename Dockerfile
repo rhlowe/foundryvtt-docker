@@ -83,11 +83,14 @@ RUN addgroup --system --gid ${FOUNDRY_UID} foundry \
   sed \
   su-exec \
   tzdata \
-  && npm install && echo ${VERSION} > image_version.txt
+  libcap \
+  && npm install && echo ${VERSION} > image_version.txt \
+  && setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/node
 
 VOLUME ["/data"]
 # HTTP Server
-EXPOSE 30000/TCP
+EXPOSE 80/TCP
+EXPOSE 443/TCP
 # TURN Server
 # Not exposing TURN ports due to bug in Docker.
 # See: https://github.com/moby/moby/issues/11185
@@ -95,6 +98,6 @@ EXPOSE 30000/TCP
 # EXPOSE 49152-65535/UDP
 
 ENTRYPOINT ["./entrypoint.sh"]
-CMD ["resources/app/main.mjs", "--port=30000", "--headless", "--noupdate",\
+CMD ["resources/app/main.mjs", "--port=80", "--headless", "--noupdate",\
   "--dataPath=/data"]
 HEALTHCHECK --start-period=3m --interval=30s --timeout=5s CMD ./check_health.sh
